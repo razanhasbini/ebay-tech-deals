@@ -1,0 +1,40 @@
+name: Run Scraper Every 2 Hours
+
+on:
+  schedule:
+    - cron: '0 */2 * * *'  # Every 2 hours
+  workflow_dispatch:       # Optional: lets you run it manually
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Install dependencies
+      run: |
+        pip install selenium pandas
+        sudo apt-get update
+        sudo apt-get install -y chromium-chromedriver
+        sudo ln -s /usr/lib/chromium-browser/chromedriver /usr/bin
+
+    - name: Run scraper
+      env:
+        DISPLAY: :99
+      run: |
+        python scraper.py
+
+    - name: Commit and push changes
+      run: |
+        git config user.name "github-actions"
+        git config user.email "github-actions@github.com"
+        git add ebay_tech_deals.csv
+        git commit -m "Auto-update: scraped data" || echo "No changes to commit"
+        git push
